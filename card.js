@@ -53,20 +53,35 @@ const view = {
     document.querySelector('#card').innerHTML = indexes.map(index => this.getCardElement(index)).join('')
   },
   // 點擊翻牌function
-  flipCard(item) {
+  flipCards(...cards) {
     // 如果背面 翻正面
-    
-    if(item.classList.contains('back')){
-      item.classList.remove('back')
-      item.innerHTML = this.getCardContent(Number(item.dataset.index))
+    cards.map(card =>{
+      if(card.classList.contains('back')){
+      card.classList.remove('back')
+      card.innerHTML = this.getCardContent(Number(card.dataset.index))
       return
     }
 
-    item.classList.add('back')
-    item.innerHTML = null
+    card.classList.add('back')
+    card.innerHTML = null
+    })
+    
   },
-  pairCard(card){
-    card.classList.add('paired')
+  pairCards(...cards){
+    cards.map(card => card.classList.add('paired'))    
+  },
+  renderScore(score){
+    document.querySelector('.score').innerHTML = `Score: ${score}`
+  },
+  renderTrideTimes(times){
+    document.querySelector('.tried').innerHTML = `You've tried: ${times} times`
+  },
+  appendWrongAnimation(...cards){
+    cards.map(card => {
+      card.classList.add('wrong')
+      card.addEventListener('animationend',e =>
+      e.target.classList.remove('wrong'),{ once : 'ture' })
+    })
   }
 }
 
@@ -93,34 +108,35 @@ const controller = {
     }
     switch (this.currentState){
       case GAME_STATE.FirstCardAwaits:
-        view.flipCard(card)
+        view.flipCards(card)
         this.currentState = GAME_STATE.SecondCardAwaits
         model.revealedCards.push(card)
         break
       case GAME_STATE.SecondCardAwaits:
-        view.flipCard(card)
+        view.flipCards(card)
         model.revealedCards.push(card)
+        view.renderTrideTimes(++model.tried)
         // 翻得牌有沒有一樣
         if(model.isRevealedCardsMatched()){
-          
+          view.renderScore(model.score += 10)
           this.currentState = GAME_STATE.CardsMatched
-          view.pairCard(model.revealedCards[0])
-          view.pairCard(model.revealedCards[1])
+          view.pairCards(...model.revealedCards)
           model.revealedCards = []
           this.currentState = GAME_STATE.FirstCardAwaits
 
         } else{
           this.currentState = GAME_STATE.CardsMatchFailed
-          setTimeout(() =>{
-            view.flipCard(model.revealedCards[0])
-            view.flipCard(model.revealedCards[1])
-            model.revealedCards = []
-            this.currentState = GAME_STATE.FirstCardAwaits
-          },1000)
+          view.appendWrongAnimation(...model.revealedCards)
+          setTimeout(this.resetCards,1000)
         }
         break
     }console.log(this.currentState)
     console.log(model.revealedCards.map(i => i.dataset.index))
+  },
+  resetCards(){
+    view.flipCards(...model.revealedCards)
+    model.revealedCards = []
+    controller.currentState = GAME_STATE.FirstCardAwaits
   }
 }
 
@@ -131,6 +147,8 @@ const model = {
     return this.revealedCards[0].dataset.index % 13 === this.revealedCards[1].dataset.index % 13
     
   },
+  score: 0,
+  tried: 0
 }
 
 controller.generateCards()

@@ -1,12 +1,14 @@
 #card {
   display: flex;
   flex-wrap: wrap;
+  width: 85%;
+  margin: 0 auto;
 }
 
 .card {
   /* 關於整張牌的設置 */
   /* 4 * 13的排版 可以隨視窗大小變化 */
-  flex: 7% 0 1; /* 每個item 分配容器寬度*/
+  flex: 7% 1 1; /* 每個item 分配容器寬度*/
   height: 8vw;/* 依視窗寬度等比例變話 */
   border: 2px solid #e0e0e0;
   /* 牌內的設置 */
@@ -38,4 +40,48 @@
 
 .paired {
   background-color: #dae0e3;
+}
+
+#header {
+  display: flex;
+  flex-direction: column;
+  width: 85%;
+  align-items: flex-end;
+  margin: 0 auto;
+
+}
+
+#header .title {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+
+}
+
+#header .title img {
+  max-width: 3em;
+}
+
+#header .title h2 {
+  padding-left: 0.5em;
+}
+
+#header .score {
+  margin: 0;
+  color: #6c90ac;
+}
+#header .tried {
+  margin-top: 0;
+}
+
+.wrong {
+  animation-name: wrongAnimation;
+  animation-duration: 0.2s;
+  animation-iteration-count: 5;
+}
+
+@keyframes wrongAnimation {
+  to {
+    border: 2px solid #ffd54f;
+  }
 }
