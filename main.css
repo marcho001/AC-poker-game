@@ -1,0 +1,37 @@
+#card {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.card {
+  /* 關於整張牌的設置 */
+  /* 4 * 13的排版 可以隨視窗大小變化 */
+  flex: 7% 0 1; /* 每個item 分配容器寬度*/
+  height: 8vw;/* 依視窗寬度等比例變話 */
+  border: 2px solid #e0e0e0;
+  /* 牌內的設置 */
+  display: flex;
+  flex-flow: column;
+  justify-content: space-around;
+  margin: 2px;
+  box-sizing: border-box;
+}
+
+.card img {
+  max-width: 30%;
+  align-self: center;
+}
+
+.card p {
+  margin: 3px;
+  font-size: 10px;
+}
+
+.card p:last-child {
+  transform: rotate(180deg);
+}
+
+.back {
+    background: url('https://assets-lighthouse.alphacamp.co/uploads/image/file/9222/ExportedContentImage_00.png');
+    background-size: cover;
+}
