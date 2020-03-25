@@ -52,7 +52,6 @@ const view = {
   displayCard(indexes) {
     document.querySelector('#card').innerHTML = indexes.map(index => this.getCardElement(index)).join('')
   },
-
   // 點擊翻牌function
   flipCard(item) {
     // 如果背面 翻正面
@@ -65,6 +64,9 @@ const view = {
 
     item.classList.add('back')
     item.innerHTML = null
+  },
+  pairCard(card){
+    card.classList.add('paired')
   }
 }
 
@@ -83,21 +85,58 @@ const controller = {
   // 遊戲初始狀況
   currentState: GAME_STATE.FirstCardAwaits,
   generateCards(){
-    view.displayCards(utility.getRandomNumberArray(52))
+    view.displayCard(utility.getRandomNumberArray(52))
+  },
+  dispatchCardAction(card){
+    if(!card.classList.contains('back')){
+      return
+    }
+    switch (this.currentState){
+      case GAME_STATE.FirstCardAwaits:
+        view.flipCard(card)
+        this.currentState = GAME_STATE.SecondCardAwaits
+        model.revealedCards.push(card)
+        break
+      case GAME_STATE.SecondCardAwaits:
+        view.flipCard(card)
+        model.revealedCards.push(card)
+        // 翻得牌有沒有一樣
+        if(model.isRevealedCardsMatched()){
+          
+          this.currentState = GAME_STATE.CardsMatched
+          view.pairCard(model.revealedCards[0])
+          view.pairCard(model.revealedCards[1])
+          model.revealedCards = []
+          this.currentState = GAME_STATE.FirstCardAwaits
+
+        } else{
+          this.currentState = GAME_STATE.CardsMatchFailed
+          setTimeout(() =>{
+            view.flipCard(model.revealedCards[0])
+            view.flipCard(model.revealedCards[1])
+            model.revealedCards = []
+            this.currentState = GAME_STATE.FirstCardAwaits
+          },1000)
+        }
+        break
+    }console.log(this.currentState)
+    console.log(model.revealedCards.map(i => i.dataset.index))
   }
 }
 
 const model = {
   // revraledCards 為被翻開的卡片
-  revealedCards: []
+  revealedCards: [],
+  isRevealedCardsMatched(){
+    return this.revealedCards[0].dataset.index % 13 === this.revealedCards[1].dataset.index % 13
+    
+  },
 }
 
 controller.generateCards()
 
 document.querySelectorAll('.card').forEach((item) => {
   item.addEventListener('click',(e) => {
-    if(e.target.classList.contains('card')){
-      view.flipCard(e.target)
-    }       
+      controller.dispatchCardAction(e.target)      
   })
 })
