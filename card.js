@@ -135,7 +135,7 @@ const controller = {
         // 翻得牌有沒有一樣
         if (model.isRevealedCardsMatched()) {
           view.renderScore(model.score += 10)
-          if(model.score === 10){
+          if(model.score === 20){
             this.currentState = GAME_STATE.GameFinished
             view.showComplete()
             this.restartGame()
