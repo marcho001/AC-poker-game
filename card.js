@@ -17,10 +17,10 @@ const Symbols = [
 const view = {
   // key的名稱跟value的名稱相同可省略
   // 運算隨機插入卡片的content 的function
-  getCardElement(index) {    
+  getCardElement(index) {
     return `<div data-index="${index}" class="card back"></div>`
   },
-  getCardContent(index){
+  getCardContent(index) {
     const cardNum = (index % 13) + 1
     const symbol = Symbols[Math.floor(index / 13)]
     return `
@@ -31,7 +31,7 @@ const view = {
   },
   // 轉換JQKA的function
   transformNumber(num) {
-    switch(num){
+    switch (num) {
       case 1:
         return 'A'
         break;
@@ -55,35 +55,51 @@ const view = {
   // 點擊翻牌function
   flipCards(...cards) {
     // 如果背面 翻正面
-    cards.map(card =>{
-      if(card.classList.contains('back')){
-      card.classList.remove('back')
-      card.innerHTML = this.getCardContent(Number(card.dataset.index))
-      return
-    }
+    cards.map(card => {
+      if (card.classList.contains('back')) {
+        card.classList.remove('back')
+        card.innerHTML = this.getCardContent(Number(card.dataset.index))
+        return
+      }
 
-    card.classList.add('back')
-    card.innerHTML = null
+      card.classList.add('back')
+      card.innerHTML = null
     })
-    
+
   },
-  pairCards(...cards){
-    cards.map(card => card.classList.add('paired'))    
+  pairCards(...cards) {
+    cards.map(card => card.classList.add('paired'))
   },
-  renderScore(score){
+  renderScore(score) {
     document.querySelector('.score').innerHTML = `Score: ${score}`
   },
-  renderTrideTimes(times){
+  renderTrideTimes(times) {
     document.querySelector('.tried').innerHTML = `You've tried: ${times} times`
   },
-  appendWrongAnimation(...cards){
+  appendWrongAnimation(...cards) {
     cards.map(card => {
       card.classList.add('wrong')
-      card.addEventListener('animationend',e =>
-      e.target.classList.remove('wrong'),{ once : 'ture' })
+      card.addEventListener('animationend', e =>
+        e.target.classList.remove('wrong'), { once: 'ture' })
     })
+  },
+  showComplete(){
+    const complete = document.querySelector('#complete')
+    complete.innerHTML = `
+      <h1 class='animated lightSpeedIn'>COMPLETE!!</h1>
+      <p>You've tried ${model.tried} times</p>     
+      <div>
+       <button type="button" style="border-radius: 50%; border: none;"><i class="fa fa-undo fa-4x" aria-hidden="true"></i></button>
+      </div>
+    `
+    complete.classList.add('complete','animated','flipinX')
+    
+   }
   }
-}
+
+
+
+
 
 const utility = {
   getRandomNumberArray(count) {
@@ -99,14 +115,14 @@ const utility = {
 const controller = {
   // 遊戲初始狀況
   currentState: GAME_STATE.FirstCardAwaits,
-  generateCards(){
+  generateCards() {
     view.displayCard(utility.getRandomNumberArray(52))
   },
-  dispatchCardAction(card){
-    if(!card.classList.contains('back')){
+  dispatchCardAction(card) {
+    if (!card.classList.contains('back')) {
       return
     }
-    switch (this.currentState){
+    switch (this.currentState) {
       case GAME_STATE.FirstCardAwaits:
         view.flipCards(card)
         this.currentState = GAME_STATE.SecondCardAwaits
@@ -117,44 +133,69 @@ const controller = {
         model.revealedCards.push(card)
         view.renderTrideTimes(++model.tried)
         // 翻得牌有沒有一樣
-        if(model.isRevealedCardsMatched()){
+        if (model.isRevealedCardsMatched()) {
           view.renderScore(model.score += 10)
+          if(model.score === 10){
+            this.currentState = GAME_STATE.GameFinished
+            view.showComplete()
+            this.restartGame()
+            this.gameStart()
+          }
           this.currentState = GAME_STATE.CardsMatched
           view.pairCards(...model.revealedCards)
           model.revealedCards = []
           this.currentState = GAME_STATE.FirstCardAwaits
+          
 
-        } else{
+        } else {
           this.currentState = GAME_STATE.CardsMatchFailed
           view.appendWrongAnimation(...model.revealedCards)
-          setTimeout(this.resetCards,1000)
+          setTimeout(this.resetCards, 1000)
         }
         break
     }console.log(this.currentState)
     console.log(model.revealedCards.map(i => i.dataset.index))
   },
-  resetCards(){
+  resetCards() {
     view.flipCards(...model.revealedCards)
     model.revealedCards = []
     controller.currentState = GAME_STATE.FirstCardAwaits
+  },
+  restartGame(){
+    const complete = document.querySelector('#complete')
+    complete.addEventListener('click',e=>{
+      if(e.target.tagName === "BUTTON"||"I"){
+        complete.innerHTML = ''
+        complete.classList.remove('complete')
+        model.tried = 0
+        model.score = 0 
+        view.renderTrideTimes(model.tried)
+        view.renderScore(model.score)
+        controller.currentState = GAME_STATE.FirstCardAwaits   
+          
+      }
+    })
+  },
+  gameStart(){
+    controller.generateCards()
+    document.querySelectorAll('.card').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        controller.dispatchCardAction(e.target)
+      })
+    })
   }
 }
 
 const model = {
   // revraledCards 為被翻開的卡片
   revealedCards: [],
-  isRevealedCardsMatched(){
+  isRevealedCardsMatched() {
     return this.revealedCards[0].dataset.index % 13 === this.revealedCards[1].dataset.index % 13
-    
+
   },
   score: 0,
   tried: 0
 }
 
 controller.generateCards()
-
-document.querySelectorAll('.card').forEach((item) => {
-  item.addEventListener('click',(e) => {
-      controller.dispatchCardAction(e.target)      
-  })
-})
+controller.gameStart()
